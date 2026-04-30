@@ -17,6 +17,9 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.65.0"),
         // JWT
         .package(url: "https://github.com/vapor/jwt.git", from: "5.0.0"),
+        // SQL Kit
+        .package(url: "https://github.com/vapor/sql-kit.git", from: "3.0.0"),
+
     ],
     targets: [
         .executableTarget(
@@ -28,6 +31,7 @@ let package = Package(
                 .product(name: "JWT", package: "jwt"),
                 .product(name: "NIOCore", package: "swift-nio"),
                 .product(name: "NIOPosix", package: "swift-nio"),
+                .product(name: "SQLKit", package: "sql-kit"),
             ],
             swiftSettings: swiftSettings
         ),
