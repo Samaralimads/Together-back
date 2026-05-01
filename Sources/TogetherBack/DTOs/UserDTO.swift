@@ -21,7 +21,20 @@ struct LoginRequest: Content {
     let password: String
 }
 
-// MARK: - Auth Response (returned on register & login)
+// MARK: - Update
+struct UpdateUserRequest: Content {
+    let firstName: String?
+    let email: String?
+    let profilePicture: String?
+}
+
+// MARK: - Change Password
+struct ChangePasswordRequest: Content {
+    let currentPassword: String
+    let newPassword: String
+}
+
+// MARK: - Auth Response
 struct AuthResponse: Content {
     let token: String
     let user: UserResponse

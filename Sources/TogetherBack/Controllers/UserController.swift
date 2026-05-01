@@ -20,6 +20,9 @@ struct UserController: RouteCollection {
         // Protected routes
         let protected = users.grouped(JWTMiddleware())
         protected.get("me", use: me)
+        protected.put("me", use: updateMe)
+        protected.delete("me", use: deleteMe)
+        protected.put("me", "password", use: changePassword)
     }
 
     // MARK: - Register
@@ -78,7 +81,7 @@ struct UserController: RouteCollection {
         return AuthResponse(token: token, user: userResponse)
     }
 
-    // MARK: - Me (protected)
+    // MARK: - Me
     @Sendable
     func me(req: Request) async throws -> UserResponse {
         let payload = try req.auth.require(UserPayload.self)
@@ -91,6 +94,80 @@ struct UserController: RouteCollection {
         }
 
         return try UserResponse(from: user)
+    }
+
+    // MARK: - Update Me
+    @Sendable
+    func updateMe(req: Request) async throws -> UserResponse {
+        let payload = try req.auth.require(UserPayload.self)
+
+        guard
+            let uuid = UUID(uuidString: payload.userId),
+            let user = try await User.find(uuid, on: req.db)
+        else {
+            throw Abort(.notFound, reason: "User not found.")
+        }
+
+        let body = try req.content.decode(UpdateUserRequest.self)
+
+        if let firstName = body.firstName {
+            user.firstName = firstName
+        }
+        if let profilePicture = body.profilePicture {
+            user.profilePicture = profilePicture
+        }
+        if let email = body.email {
+            // Check new email not already taken
+            let existing = try await User.query(on: req.db)
+                .filter(\.$email == email)
+                .first()
+            guard existing == nil else {
+                throw Abort(.conflict, reason: "This email is already in use.")
+            }
+            user.email = email
+        }
+
+        try await user.save(on: req.db)
+        return try UserResponse(from: user)
+    }
+
+    // MARK: - Delete Me
+    @Sendable
+    func deleteMe(req: Request) async throws -> HTTPStatus {
+        let payload = try req.auth.require(UserPayload.self)
+
+        guard
+            let uuid = UUID(uuidString: payload.userId),
+            let user = try await User.find(uuid, on: req.db)
+        else {
+            throw Abort(.notFound, reason: "User not found.")
+        }
+
+        try await user.delete(on: req.db)
+        return .noContent
+    }
+
+    // MARK: - Change Password
+    @Sendable
+    func changePassword(req: Request) async throws -> HTTPStatus {
+        let payload = try req.auth.require(UserPayload.self)
+
+        guard
+            let uuid = UUID(uuidString: payload.userId),
+            let user = try await User.find(uuid, on: req.db)
+        else {
+            throw Abort(.notFound, reason: "User not found.")
+        }
+
+        let body = try req.content.decode(ChangePasswordRequest.self)
+
+        guard try Bcrypt.verify(body.currentPassword, created: user.password) else {
+            throw Abort(.unauthorized, reason: "Current password is incorrect.")
+        }
+
+        user.password = try Bcrypt.hash(body.newPassword)
+        try await user.save(on: req.db)
+        return .ok
     }
 
     // MARK: - Helpers
