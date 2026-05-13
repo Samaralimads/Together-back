@@ -12,5 +12,6 @@ func routes(_ app: Application) throws {
     try app.register(collection: PlannedActivityController())
     try app.register(collection: ImportantDateController())
     try app.register(collection: FavoriteController())
-    
+    try app.register(collection: PasswordResetController())
+
 }
