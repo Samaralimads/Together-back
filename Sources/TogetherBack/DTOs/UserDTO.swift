@@ -42,14 +42,14 @@ struct AuthResponse: Content {
 
 // MARK: - User Response
 struct UserResponse: Content {
-    let id: String
+    let id: UUID
     let firstName: String
     let birthDate: String
     let email: String
     let profilePicture: String?
 
     init(from user: User) throws {
-        self.id = try user.requireID().uuidString
+        self.id = try user.requireID()
         self.firstName = user.firstName
         self.email = user.email
         self.profilePicture = user.profilePicture

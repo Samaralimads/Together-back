@@ -20,12 +20,12 @@ struct InvitationResponse: Content {
 
 // MARK: - Couple Response
 struct CoupleResponse: Content {
-    let id: String
+    let id: UUID
     let relationshipStartDate: String
     let partner: PartnerResponse
 }
 
 struct PartnerResponse: Content {
-    let id: String
+    let id: UUID
     let firstName: String
 }

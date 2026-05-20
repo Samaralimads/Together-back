@@ -66,8 +66,8 @@ struct ActivityController: RouteCollection {
             }
         }
 
-        let activities = try await query.all()
-
+        let activities = try await query.sort(.custom("RAND()")).all()
+        
         // Filter by search term (in memory — fast enough at this scale)
         if let search = req.query[String.self, at: "search"], !search.isEmpty {
             let lowercased = search.lowercased()

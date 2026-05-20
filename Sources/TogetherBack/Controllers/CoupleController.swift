@@ -98,10 +98,10 @@ struct CoupleController: RouteCollection {
         }
 
         return CoupleResponse(
-            id: try couple.requireID().uuidString,
+            id: try couple.requireID(),
             relationshipStartDate: formatter.string(from: couple.relationshipStartDate),
             partner: PartnerResponse(
-                id: try partner.requireID().uuidString,
+                id: try partner.requireID(),
                 firstName: partner.firstName
             )
         )

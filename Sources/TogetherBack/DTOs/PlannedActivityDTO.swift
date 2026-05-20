@@ -9,7 +9,7 @@ import Vapor
 
 // MARK: - Propose Request
 struct ProposeActivityRequest: Content {
-    let activityId: String
+    let activityId: UUID
     let proposedDate: String
     let reminderEnabled: Bool
     let reminderDaysBefore: Int?
@@ -30,11 +30,11 @@ struct RescheduleActivityRequest: Content {
 
 // MARK: - Planned Activity Response
 struct PlannedActivityResponse: Content {
-    let id: String
-    let activityId: String
+    let id: UUID
+    let activityId: UUID
     let activityTitle: String
-    let coupleId: String?
-    let plannedByUserId: String
+    let coupleId: UUID?
+    let plannedByUserId: UUID
     let proposedDate: String
     let responseDate: String?
     let bookingStatus: String

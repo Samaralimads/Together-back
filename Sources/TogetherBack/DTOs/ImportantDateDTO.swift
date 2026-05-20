@@ -10,17 +10,17 @@ import Vapor
 // MARK: - Create / Update Request
 struct ImportantDateRequest: Content {
     let label: String
-    let date: String 
+    let date: String
 }
 
 // MARK: - Response
 struct ImportantDateResponse: Content {
-    let id: String
+    let id: UUID
     let label: String
     let date: String
 
     init(from importantDate: ImportantDate) throws {
-        self.id = try importantDate.requireID().uuidString
+        self.id = try importantDate.requireID()
         self.label = importantDate.label
 
         let formatter = DateFormatter()

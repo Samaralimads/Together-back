@@ -29,16 +29,11 @@ struct PlannedActivityController: RouteCollection {
 
         let body = try req.content.decode(ProposeActivityRequest.self)
 
-        guard let activityId = UUID(uuidString: body.activityId) else {
-            throw Abort(.badRequest, reason: "Invalid activity ID.")
-        }
-
         let formatter = dateFormatter()
         guard let proposedDate = formatter.date(from: body.proposedDate) else {
             throw Abort(.badRequest, reason: "Invalid date format. Expected YYYY-MM-DD HH:mm.")
         }
 
-        // Validate reminder
         if body.reminderEnabled && (body.reminderDaysBefore == nil || body.reminderDaysBefore! <= 0) {
             throw Abort(.badRequest, reason: "reminder_days_before must be greater than 0 when reminder is enabled.")
         }
@@ -46,7 +41,7 @@ struct PlannedActivityController: RouteCollection {
         let coupleId = try await getCoupleId(for: userId, db: req.db)
 
         let planned = PlannedActivity(
-            activityId: activityId,
+            activityId: body.activityId,
             coupleId: coupleId,
             plannedByUserId: userId,
             proposedDate: proposedDate,
@@ -55,7 +50,6 @@ struct PlannedActivityController: RouteCollection {
         )
 
         try await planned.save(on: req.db)
-
         return try await buildResponse(for: planned, db: req.db)
     }
 
@@ -81,11 +75,9 @@ struct PlannedActivityController: RouteCollection {
     @Sendable
     func accept(req: Request) async throws -> PlannedActivityResponse {
         let planned = try await getAndValidate(req: req)
-
         planned.bookingStatus = "accepted"
         planned.responseDate = Date()
         try await planned.save(on: req.db)
-
         return try await buildResponse(for: planned, db: req.db)
     }
 
@@ -94,12 +86,10 @@ struct PlannedActivityController: RouteCollection {
     func decline(req: Request) async throws -> PlannedActivityResponse {
         let planned = try await getAndValidate(req: req)
         let body = try? req.content.decode(DeclineActivityRequest.self)
-
         planned.bookingStatus = "rejected"
         planned.responseDate = Date()
         planned.note = body?.note
         try await planned.save(on: req.db)
-
         return try await buildResponse(for: planned, db: req.db)
     }
 
@@ -119,13 +109,11 @@ struct PlannedActivityController: RouteCollection {
             throw Abort(.badRequest, reason: "Invalid date format. Expected YYYY-MM-DD HH:mm.")
         }
 
-        // Mark old proposal as rejected
         planned.bookingStatus = "rejected"
         planned.responseDate = Date()
         planned.note = body.note
         try await planned.save(on: req.db)
 
-        // Create new proposal with the new date
         let coupleId = try await getCoupleId(for: userId, db: req.db)
         let newProposal = PlannedActivity(
             activityId: planned.activityId,
@@ -142,7 +130,6 @@ struct PlannedActivityController: RouteCollection {
     }
 
     // MARK: - Helpers
-
     private func getAndValidate(req: Request) async throws -> PlannedActivity {
         let payload = try req.auth.require(UserPayload.self)
         guard let userId = UUID(uuidString: payload.userId) else {
@@ -157,13 +144,11 @@ struct PlannedActivityController: RouteCollection {
             throw Abort(.notFound, reason: "Planned activity not found.")
         }
 
-        // Make sure the user is part of this couple
         let coupleId = try await getCoupleId(for: userId, db: req.db)
         guard planned.coupleId == coupleId else {
             throw Abort(.forbidden, reason: "You are not part of this couple.")
         }
 
-        // Can't respond to something that is already resolved
         guard planned.bookingStatus == "pending" else {
             throw Abort(.conflict, reason: "This proposal has already been responded to.")
         }
@@ -189,11 +174,11 @@ struct PlannedActivityController: RouteCollection {
         createdFormatter.timeZone = TimeZone(identifier: "UTC")
 
         return PlannedActivityResponse(
-            id: try planned.requireID().uuidString,
-            activityId: planned.activityId.uuidString,
+            id: try planned.requireID(),
+            activityId: planned.activityId,
             activityTitle: activity?.title ?? "Unknown",
-            coupleId: planned.coupleId?.uuidString,
-            plannedByUserId: planned.plannedByUserId.uuidString,
+            coupleId: planned.coupleId,
+            plannedByUserId: planned.plannedByUserId,
             proposedDate: formatter.string(from: planned.proposedDate),
             responseDate: planned.responseDate.map { formatter.string(from: $0) },
             bookingStatus: planned.bookingStatus,
@@ -212,7 +197,6 @@ struct PlannedActivityController: RouteCollection {
     }
 }
 
-// Helper for async map
 extension Array {
     func asyncMap<T>(_ transform: (Element) async throws -> T) async throws -> [T] {
         var results = [T]()
