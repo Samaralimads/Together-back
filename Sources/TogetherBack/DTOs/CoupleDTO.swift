@@ -7,7 +7,12 @@
 
 import Vapor
 
-// MARK: - Join Request
+// MARK: - Create Couple Request (User 1)
+struct CreateCoupleRequest: Content {
+    let relationshipStartDate: String
+}
+
+// MARK: - Join Request (User 2)
 struct JoinCoupleRequest: Content {
     let invitationCode: String
     let relationshipStartDate: String
@@ -22,7 +27,7 @@ struct InvitationResponse: Content {
 struct CoupleResponse: Content {
     let id: UUID
     let relationshipStartDate: String
-    let partner: PartnerResponse
+    let partner: PartnerResponse?
 }
 
 struct PartnerResponse: Content {
