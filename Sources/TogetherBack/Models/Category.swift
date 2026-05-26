@@ -17,8 +17,5 @@ final class Category: Model, @unchecked Sendable {
     @Field(key: "name")
     var name: String
 
-    @Field(key: "image_url")
-    var imageUrl: String
-
     init() {}
 }

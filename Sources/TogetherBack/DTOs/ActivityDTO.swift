@@ -11,12 +11,10 @@ import Vapor
 struct CategoryResponse: Content {
     let id: UUID
     let name: String
-    let imageUrl: String
 
     init(from category: Category) throws {
         self.id = try category.requireID()
         self.name = category.name
-        self.imageUrl = category.imageUrl
     }
 }
 
