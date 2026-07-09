@@ -13,7 +13,7 @@ struct ActivityController: RouteCollection {
         let activities = routes.grouped("activities")
         let categories = routes.grouped("categories")
 
-        // Public routes 
+        // Public routes
         activities.get(use: list)
         activities.get(":activityId", use: detail)
         categories.get(use: listCategories)
@@ -67,16 +67,17 @@ struct ActivityController: RouteCollection {
         }
 
         let activities = try await query.sort(.custom("RAND()")).all()
-        
+        let categoryNames = try await categoryNameMap(on: req.db)
+
         // Filter by search term (in memory — fast enough at this scale)
         if let search = req.query[String.self, at: "search"], !search.isEmpty {
             let lowercased = search.lowercased()
             return try activities
                 .filter { $0.title.lowercased().contains(lowercased) }
-                .map { try ActivityResponse(from: $0) }
+                .map { try ActivityResponse(from: $0, categoryName: categoryNames[$0.categoryId] ?? "") }
         }
 
-        return try activities.map { try ActivityResponse(from: $0) }
+        return try activities.map { try ActivityResponse(from: $0, categoryName: categoryNames[$0.categoryId] ?? "") }
     }
 
     // MARK: - GET /activities/:activityId
@@ -90,7 +91,8 @@ struct ActivityController: RouteCollection {
             throw Abort(.notFound, reason: "Activity not found.")
         }
 
-        return try ActivityResponse(from: activity)
+        let categoryName = try await Category.find(activity.categoryId, on: req.db)?.name ?? ""
+        return try ActivityResponse(from: activity, categoryName: categoryName)
     }
 
     // MARK: - GET /categories
@@ -98,5 +100,17 @@ struct ActivityController: RouteCollection {
     func listCategories(req: Request) async throws -> [CategoryResponse] {
         let categories = try await Category.query(on: req.db).all()
         return try categories.map { try CategoryResponse(from: $0) }
+    }
+}
+
+// MARK: - Helpers
+extension ActivityController {
+    static func categoryNames(on db: any Database) async throws -> [UUID: String] {
+        let categories = try await Category.query(on: db).all()
+        return Dictionary(uniqueKeysWithValues: try categories.map { (try $0.requireID(), $0.name) })
+    }
+
+    private func categoryNameMap(on db: any Database) async throws -> [UUID: String] {
+        try await Self.categoryNames(on: db)
     }
 }

@@ -27,8 +27,9 @@ struct ActivityResponse: Content {
     let duration: Int
     let isIndoor: Bool
     let categoryId: UUID
+    let categoryName: String
 
-    init(from activity: Activity) throws {
+    init(from activity: Activity, categoryName: String) throws {
         self.id = try activity.requireID()
         self.title = activity.title
         self.description = activity.description
@@ -36,5 +37,6 @@ struct ActivityResponse: Content {
         self.duration = activity.duration
         self.isIndoor = activity.isIndoor
         self.categoryId = activity.categoryId
+        self.categoryName = categoryName
     }
 }

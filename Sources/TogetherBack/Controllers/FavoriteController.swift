@@ -35,7 +35,9 @@ struct FavoriteController: RouteCollection {
             .filter(\.$id ~~ activityIds)
             .all()
 
-        return try activities.map { try ActivityResponse(from: $0) }
+        let categoryNames = try await ActivityController.categoryNames(on: req.db)
+
+        return try activities.map { try ActivityResponse(from: $0, categoryName: categoryNames[$0.categoryId] ?? "") }
     }
 
     // MARK: - POST /favorites/:activityId
