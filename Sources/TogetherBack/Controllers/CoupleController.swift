@@ -89,19 +89,20 @@ struct CoupleController: RouteCollection {
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.timeZone = TimeZone(identifier: "UTC")
 
-        guard let startDate = formatter.date(from: body.relationshipStartDate) else {
-            throw Abort(.badRequest, reason: "Invalid date format. Expected YYYY-MM-DD.")
-        }
-
-        let formattedDate = formatter.string(from: startDate)
-
         guard let sql = req.db as? any SQLDatabase else {
             throw Abort(.internalServerError, reason: "Database does not support raw SQL.")
         }
 
-        try await sql.raw("""
-            CALL create_couple_from_invitation(\(bind: body.invitationCode), \(bind: payload.userId), \(bind: formattedDate))
-        """).run()
+        let placeholderDate = formatter.string(from: Date())
+
+        do {
+            try await sql.raw("""
+                CALL create_couple_from_invitation(\(bind: body.invitationCode), \(bind: payload.userId), \(bind: placeholderDate))
+            """).run()
+        } catch {
+            req.logger.error("Join couple failed: \(error)")
+            throw Abort(.badRequest, reason: "Invalid or expired code, or your partner hasn't finished pairing yet. Please try again.")
+        }
 
         guard let userId = UUID(uuidString: payload.userId) else {
             throw Abort(.unauthorized)

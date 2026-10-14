@@ -15,7 +15,6 @@ struct CreateCoupleRequest: Content {
 // MARK: - Join Request (User 2)
 struct JoinCoupleRequest: Content {
     let invitationCode: String
-    let relationshipStartDate: String
 }
 
 // MARK: - Invitation Response
