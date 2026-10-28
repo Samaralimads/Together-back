@@ -55,13 +55,12 @@ struct ActivityController: RouteCollection {
             }
         }
 
-        // Filter by duration: < 2 HOURS, < 5 HOURS, 1 DAY, WEEKEND
+        // Filter by duration (minutes): < 2 HOURS, < 5 HOURS, < 8 HOURS
         if let duration = req.query[String.self, at: "duration"] {
             switch duration.uppercased() {
             case "< 2 HOURS": query = query.filter(\.$duration <= 120)
             case "< 5 HOURS": query = query.filter(\.$duration <= 300)
-            case "1 DAY":     query = query.filter(\.$duration <= 480)
-            case "WEEKEND":   query = query.filter(\.$duration > 480)
+            case "< 8 HOURS": query = query.filter(\.$duration <= 480)
             default: break
             }
         }
