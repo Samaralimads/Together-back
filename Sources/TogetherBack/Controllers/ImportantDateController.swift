@@ -46,6 +46,7 @@ struct ImportantDateController: RouteCollection {
         let date = try parseDate(body.date)
 
         let importantDate = ImportantDate(userId: userId, label: body.label, date: date)
+        apply(body, to: importantDate)
         try await importantDate.save(on: req.db)
 
         return try ImportantDateResponse(from: importantDate)
@@ -64,6 +65,7 @@ struct ImportantDateController: RouteCollection {
 
         importantDate.label = body.label
         importantDate.date = try parseDate(body.date)
+        apply(body, to: importantDate)
         try await importantDate.save(on: req.db)
 
         return try ImportantDateResponse(from: importantDate)
@@ -98,6 +100,17 @@ struct ImportantDateController: RouteCollection {
         }
 
         return importantDate
+    }
+
+    /// Copies the optional repeat / reminder fields, leaving the stored values alone when omitted.
+    private func apply(_ body: ImportantDateRequest, to importantDate: ImportantDate) {
+        if let repeatYearly = body.repeatYearly {
+            importantDate.repeatYearly = repeatYearly
+        }
+        if let reminderEnabled = body.reminderEnabled {
+            importantDate.reminderEnabled = reminderEnabled
+            importantDate.reminderDaysBefore = reminderEnabled ? max(body.reminderDaysBefore ?? 0, 0) : nil
+        }
     }
 
     private func parseDate(_ string: String) throws -> Date {

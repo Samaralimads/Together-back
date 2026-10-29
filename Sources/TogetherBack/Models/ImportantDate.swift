@@ -23,6 +23,9 @@ final class ImportantDate: Model, @unchecked Sendable {
     @Field(key: "date")
     var date: Date
 
+    @Field(key: "repeat_yearly")
+    var repeatYearly: Bool
+
     @Field(key: "reminder_enabled")
     var reminderEnabled: Bool
 
@@ -36,6 +39,7 @@ final class ImportantDate: Model, @unchecked Sendable {
         self.userId = userId
         self.label = label
         self.date = date
+        self.repeatYearly = false
         self.reminderEnabled = false
         self.reminderDaysBefore = nil
     }
